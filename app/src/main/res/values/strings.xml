@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Stock Search App</string>
+    <string name="title">Stock Name/Symbol</string>
+    <string name="clear">Clear</string>
+    <string name="getQuote">Get Quote</string>
+    <string name="favs">Favorites</string>
+    <string name="autoRef">Auto Refresh</string>
+    <string name="autoHint">Type stock name/symbol</string>
+    <string name="apiToken">9b67ef079f456d527f77c69af97df18d7824f608</string>
+    <string name="currentInfoLabel">Current Stock Info</string>
+</resources>
