@@ -41,6 +41,10 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.FavVie
         notifyItemRemoved(pos);
     }
 
+    public FavoriteItem get(int pos) {
+        return favItems.get(pos);
+    }
+
     public FavoriteAdapter(List<FavoriteItem> theItems) {
         favItems = theItems;
     }
@@ -62,11 +66,11 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.FavVie
         holder.favPriceView.setText(aLastPrice);
         double aFavPercent = theFavItem.getPercentageFav();
         if (aFavPercent < 0) {
-            String negPerc = aFavPercent + "";
+            String negPerc = aFavPercent + "%";
             holder.favPercentageView.setBackgroundColor(Color.RED);
             holder.favPercentageView.setText(negPerc);
         } else {
-            String posPerc = "+" + aFavPercent + "";
+            String posPerc = "+" + aFavPercent + "%";
             holder.favPercentageView.setBackgroundColor(Color.GREEN);
             holder.favPercentageView.setText(posPerc);
         }

@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -34,12 +35,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     AutoCompleteTextView typeStock;
     SwitchCompat autoRefresher;
-    ImageButton refresh;
     Context mainContext;
     ArrayAdapter<String> adapter;
     SharedPreferences sharedFavorites;
@@ -66,6 +71,12 @@ public class MainActivity extends AppCompatActivity {
         add the saved favorites from shared preference here
         read from the shared preference and load onto the adapter
          */
+        Map<String, ?> sharedSet = sharedFavorites.getAll();
+        for (Map.Entry<String, ?> putIn : sharedSet.entrySet()) {
+            String toPut = putIn.getValue().toString();
+            AddFavoriteClass addStored = new AddFavoriteClass(mainContext, toPut);
+            addStored.execute(toPut);
+        }
 
         typeStock = (AutoCompleteTextView) findViewById(R.id.stockAutoComplete);
         List<String> stocks = new ArrayList<String>();
@@ -162,10 +173,46 @@ public class MainActivity extends AppCompatActivity {
             emptyFav.show();
         } else {
             // call background thread to add favorite
-            AddFavoriteClass addFav = new AddFavoriteClass(mainContext, inputFav);
-            addFav.execute(inputFav);
+            String inputUpper = inputFav.toUpperCase();
+            String fromShared = sharedFavorites.getString(inputUpper, "");
+            if (fromShared.equals(inputUpper)) {
+                Toast.makeText(this, inputUpper + " is already a favorite.",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                AddFavoriteClass addFav = new AddFavoriteClass(mainContext, inputFav);
+                addFav.execute(inputFav);
+            }
         }
     }
+
+    public void onClickRefresh(View v) {
+        if (!autoRefresher.isChecked()) {
+            if (favAdapter.getItemCount() > 0) {
+                refresherHelp();
+            } else {
+                Toast.makeText(this, "Nothing to refresh.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void refresherHelp() {
+        Toast.makeText(this, "Refreshing favorites.", Toast.LENGTH_SHORT).show();
+        int oldCount = favAdapter.getItemCount();
+        ArrayList<String> favTickers = new ArrayList<String>();
+        for (int a = 0; a < oldCount; a++) {
+            String aFavTicker = favAdapter.get(a).getTickerFav();
+            favTickers.add(aFavTicker);
+        }
+        for (int b = 0; b < oldCount; b++) {
+            favAdapter.remove(0);
+        }
+        for (int z = 0; z < favTickers.size(); z++) {
+            AddFavoriteClass addAFav = new AddFavoriteClass(mainContext, favTickers.get(z));
+            addAFav.execute(favTickers.get(z));
+        }
+    }
+
 
     /*
     background thread class for adding to favorites list
@@ -269,8 +316,9 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         if ((objLast != null) && (objPrevClose != null)) {
+                            double percent = ((objLast - objPrevClose) / objPrevClose) * 100;
                             favItemPercent = Double.parseDouble(new DecimalFormat(
-                                    "####.##").format((objLast - objPrevClose)));
+                                    "####.##").format(percent));
                         } else {
                             favItemPercent = 0.0;
                         }
@@ -291,6 +339,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (isValid) {
+                String itemTick = item.getTickerFav();
+                String isInShared = sharedFavorites.getString(itemTick, "");
+                if (!itemTick.equals(isInShared)) {
+                    SharedPreferences.Editor editor = sharedFavorites.edit();
+                    editor.putString(itemTick, itemTick);
+                    editor.commit();
+                }
                 favAdapter.add(favAdapter.getItemCount(), item);
             } else {
                 AlertDialog.Builder builder = new AlertDialog.Builder(c);
